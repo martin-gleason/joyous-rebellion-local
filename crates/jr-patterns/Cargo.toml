@@ -1,0 +1,17 @@
+[package]
+name = "jr-patterns"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Domain newtypes, typed errors, anti-pattern registry, and security utilities for the Joyous Rebellion sync server"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+zeroize = { workspace = true }
+subtle = "2"
+regex = "1"
+walkdir = "2"

@@ -1,0 +1,39 @@
+# Copyright (C) 2026 Martin Gleason & Arthur Dennis
+# Licensed under AGPL-3.0-or-later
+
+[workspace]
+members = [
+    "crates/jr-patterns",
+    "crates/jr-auth",
+    "crates/jr-storage",
+    "crates/jr-relay",
+    "src-tauri",
+]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/JoyousRebellion/joyous-rebellion-local"
+
+[workspace.dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+zeroize = { version = "1", features = ["derive"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tokio = { version = "1", features = ["full"] }
+axum = { version = "0.8", features = ["ws"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["cors", "fs"] }
+dashmap = "6"
+base64 = "0.22"
+futures-util = "0.3"
+
+# Shared internal crates
+jr-patterns = { path = "crates/jr-patterns" }
+jr-auth = { path = "crates/jr-auth" }
+jr-storage = { path = "crates/jr-storage" }
+jr-relay = { path = "crates/jr-relay" }

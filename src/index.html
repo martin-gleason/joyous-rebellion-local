@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<!-- Copyright (C) 2026 Martin Gleason & Arthur Dennis -->
+<!-- Licensed under AGPL-3.0-or-later -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR Local</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- Local-only banner -->
+<div class="local-banner">
+    <span class="lock-icon"></span>
+    YOUR DATA IS ON THIS DEVICE ONLY
+</div>
+
+<!-- Header -->
+<header>
+    <h1>JR Local</h1>
+    <div class="status-row">
+        <div class="status-dot" id="server-dot"></div>
+        <span id="server-status-text">Starting...</span>
+    </div>
+</header>
+
+<!-- Navigation -->
+<nav>
+    <button class="active" data-section="dashboard" onclick="showSection('dashboard')">Dashboard</button>
+    <button data-section="devices" onclick="showSection('devices')">Devices</button>
+    <button data-section="settings" onclick="showSection('settings')">Settings</button>
+    <button data-section="data" onclick="showSection('data')">Data</button>
+</nav>
+
+<!-- Main Content -->
+<main>
+
+    <!-- Dashboard Section -->
+    <div class="section active" id="section-dashboard">
+        <div class="stats-grid">
+            <div class="card">
+                <div class="stat-value" id="peer-count">0</div>
+                <div class="stat-label">Connected Devices</div>
+            </div>
+            <div class="card">
+                <div class="stat-value"><span class="mode-badge" id="mode-badge">Campaign</span></div>
+                <div class="stat-label">Mode</div>
+            </div>
+            <div class="card">
+                <div class="stat-value" id="campaign-name-display">—</div>
+                <div class="stat-label">Campaign</div>
+            </div>
+        </div>
+
+        <div class="two-col">
+            <div class="card">
+                <h2>Pair a Device</h2>
+                <div class="qr-container">
+                    <img id="qr-image" alt="QR Code" style="display:none;">
+                    <p id="qr-loading" style="color: var(--muted); font-size: 14px;">Generating QR code...</p>
+                </div>
+                <button class="btn btn-secondary" onclick="refreshQR()" style="width: 100%;">Refresh QR Code</button>
+            </div>
+            <div class="card">
+                <h2>Session Code</h2>
+                <div class="session-code" id="session-code-display">------</div>
+                <p style="color: var(--muted); font-size: 12px; text-align: center; margin-bottom: 12px;">
+                    Enter this code on your device to connect
+                </p>
+                <button class="btn btn-secondary" onclick="handleRegenerateCode()" style="width: 100%;">Regenerate Code</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices Section -->
+    <div class="section" id="section-devices">
+        <div class="card">
+            <h2>Connected Devices</h2>
+            <ul class="device-list" id="device-list">
+                <!-- Populated by JS -->
+            </ul>
+            <div class="empty-state" id="no-devices">
+                <p>No devices connected. Scan the QR code or enter the session code on a device to pair.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Section -->
+    <div class="section" id="section-settings">
+        <div class="card">
+            <h2>Campaign Settings</h2>
+            <div class="form-group">
+                <label>Campaign Name</label>
+                <input type="text" id="settings-name" placeholder="Enter campaign name">
+            </div>
+            <div class="form-group">
+                <label>Mode</label>
+                <select id="settings-mode">
+                    <option value="campaign">Campaign</option>
+                    <option value="mutual_aid">Mutual Aid</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+        </div>
+
+        <div class="card">
+            <h2>Session Code</h2>
+            <div class="session-code" id="settings-session-code">------</div>
+            <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
+                Regenerating disconnects all currently paired devices.
+            </p>
+            <button class="btn btn-secondary" onclick="handleRegenerateCode()">Regenerate Session Code</button>
+        </div>
+
+        <div class="card">
+            <h2>Server</h2>
+            <div class="status-row">
+                <div class="status-dot" id="settings-server-dot"></div>
+                <span id="settings-server-text">Checking...</span>
+            </div>
+            <p style="color: var(--muted); font-size: 12px; margin-top: 8px;" id="settings-ip-display">
+                LAN IP: detecting...
+            </p>
+        </div>
+    </div>
+
+    <!-- Data Section -->
+    <div class="section" id="section-data">
+        <div class="card">
+            <h2>Export Data</h2>
+            <p style="color: var(--muted); font-size: 14px; margin-bottom: 12px;">
+                Download a JSON export of all campaign data on this device.
+            </p>
+            <button class="btn btn-primary" onclick="handleExport()">Export Data</button>
+        </div>
+
+        <div class="card" style="border-color: var(--red);">
+            <h2 style="color: var(--red);">Shred All Data</h2>
+            <p style="color: var(--muted); font-size: 14px; margin-bottom: 12px;">
+                Securely delete all campaign data on this device. Files are overwritten with random bytes before deletion.
+                This action cannot be undone.
+            </p>
+            <button class="btn btn-danger" onclick="handleShred()">Shred All Data</button>
+        </div>
+    </div>
+
+</main>
+
+<!-- First Launch Overlay -->
+<div class="overlay" id="setup-overlay">
+    <div class="setup-card">
+        <h2>Welcome to JR Local</h2>
+        <p>Your campaign server runs right here on this device. No cloud needed.</p>
+
+        <div class="form-group">
+            <label>Campaign Name</label>
+            <input type="text" id="setup-name" placeholder="e.g. Chicago Ward 42">
+        </div>
+
+        <label style="display: block; text-align: left; font-size: 13px; color: var(--muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">Mode</label>
+        <div class="mode-picker">
+            <div class="mode-option selected" data-mode="campaign" onclick="selectMode(this)">
+                <h4>Campaign</h4>
+                <p>Full organizing with all 13 data tables</p>
+            </div>
+            <div class="mode-option" data-mode="mutual_aid" onclick="selectMode(this)">
+                <h4>Mutual Aid</h4>
+                <p>Streamlined for mutual aid coordination</p>
+            </div>
+        </div>
+
+        <button class="btn btn-primary" onclick="finishSetup()" style="width: 100%; padding: 14px;" id="setup-start-btn">
+            Start Server
+        </button>
+    </div>
+</div>
+
+<!-- Shred Confirm Dialog -->
+<div class="confirm-overlay hidden" id="shred-confirm">
+    <div class="confirm-dialog">
+        <h3>Are you absolutely sure?</h3>
+        <p>This will securely delete ALL campaign data on this device. Connected devices will be notified and disconnected. This cannot be undone.</p>
+        <div class="confirm-actions">
+            <button class="btn btn-secondary" onclick="cancelShred()">Cancel</button>
+            <button class="btn btn-danger" onclick="confirmShred()">Yes, Shred Everything</button>
+        </div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
