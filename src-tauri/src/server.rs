@@ -8,6 +8,7 @@
 //! - Session code validated on WebSocket upgrade
 //! - Serves static web UI from src/
 
+use base64::Engine;
 use axum::extract::ws::WebSocketUpgrade;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
@@ -30,6 +31,8 @@ use tracing::{info, warn};
 use uuid::Uuid;
 
 use crate::config::LocalConfig;
+use jr_storage::blob_store::BlobStore;
+use jr_storage::config::StorageConfig;
 
 /// Shared state for the local Axum server.
 #[derive(Clone)]
@@ -42,6 +45,8 @@ pub struct LocalState {
     pub campaign_id: CampaignId,
     /// Path to static web UI files.
     pub static_dir: PathBuf,
+    /// Blob storage for Automerge documents.
+    pub blob_store: BlobStore,
 }
 
 /// Query parameters for WebSocket sync endpoint.
@@ -214,16 +219,62 @@ async fn shred_handler(State(state): State<LocalState>) -> Json<Value> {
     }))
 }
 
-/// GET /api/export — JSON export of all data.
+/// GET /api/export — JSON export of all data including Automerge document blobs.
 #[tracing::instrument(skip(state))]
 async fn export_handler(State(state): State<LocalState>) -> Json<Value> {
     let config = state.config.read().await;
+    let campaign_name = config.campaign_name.clone();
+    let mode = serde_json::to_value(&config.mode).unwrap_or(json!("campaign"));
+    drop(config);
+
+    // Read all stored document blobs
+    let mut documents = json!({});
+    match state.blob_store.list_blobs(state.campaign_id).await {
+        Ok(names) => {
+            for name in &names {
+                match state.blob_store.read_blob(state.campaign_id, name).await {
+                    Ok(Some(data)) => {
+                        documents[name] = json!({
+                            "size_bytes": data.len(),
+                            "data_base64": base64::engine::general_purpose::STANDARD.encode(&data),
+                        });
+                    }
+                    Ok(None) => {
+                        documents[name] = json!({ "size_bytes": 0, "data_base64": "" });
+                    }
+                    Err(e) => {
+                        documents[name] = json!({ "error": format!("{e}") });
+                    }
+                }
+            }
+            info!(count = names.len(), "Exported {} documents", names.len());
+        }
+        Err(e) => {
+            warn!("Failed to list blobs for export: {e}");
+        }
+    }
+
+    // Read audit log if it exists
+    let audit_log = {
+        let config = state.config.read().await;
+        let audit_path = config.data_dir.join("campaigns")
+            .join(state.campaign_id.to_string())
+            .join("audit/audit.jsonl");
+        drop(config);
+        match tokio::fs::read_to_string(&audit_path).await {
+            Ok(content) => json!(content),
+            Err(_) => json!(null),
+        }
+    };
+
     Json(json!({
-        "campaign_name": config.campaign_name,
-        "mode": config.mode,
+        "campaign_name": campaign_name,
+        "mode": mode,
+        "campaign_id": state.campaign_id.to_string(),
         "exported_at": chrono_now_iso(),
-        "peers": state.hub.total_peers(),
-        "note": "Full data export — includes all synced documents",
+        "connected_peers": state.hub.total_peers(),
+        "documents": documents,
+        "audit_log": audit_log,
     }))
 }
 

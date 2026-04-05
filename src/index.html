@@ -188,6 +188,25 @@
     </div>
 </div>
 
+<!-- Close dialog: Keep or Shred -->
+<div class="confirm-overlay hidden" id="close-dialog">
+    <div class="confirm-dialog">
+        <h3>Closing JR Local</h3>
+        <p>What would you like to do with your data?</p>
+        <div class="confirm-actions" style="flex-direction: column; gap: 12px;">
+            <button class="btn btn-primary" onclick="handleKeepAndClose()" style="width: 100%;">
+                Keep Data — I'll come back later
+            </button>
+            <button class="btn btn-danger" onclick="handleShredAndClose()" style="width: 100%;">
+                Shred Everything — delete all data securely
+            </button>
+            <button class="btn btn-secondary" onclick="hideCloseDialog()" style="width: 100%;">
+                Cancel — stay open
+            </button>
+        </div>
+    </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

@@ -178,6 +178,13 @@ pub async fn complete_setup(
     Ok(json!({ "status": "ok" }))
 }
 
+/// Close the app window (called after Keep/Shred decision).
+#[tauri::command]
+pub async fn close_app(window: tauri::Window) -> Result<(), String> {
+    info!("User chose to close — shutting down");
+    window.destroy().map_err(|e| format!("Failed to close: {e}"))
+}
+
 /// Detect the machine's LAN IP address.
 fn get_local_ip_inner() -> String {
     // Try to find a non-loopback IPv4 address by connecting to a remote address

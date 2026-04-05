@@ -15,10 +15,12 @@ mod server;
 mod shred;
 
 use commands::AppStateHandle;
-use tauri::Manager;
+use tauri::{Emitter, Manager};
 use config::LocalConfig;
 use jr_patterns::CampaignId;
 use jr_relay::CampaignHub;
+use jr_storage::blob_store::BlobStore;
+use jr_storage::config::StorageConfig;
 use server::LocalState;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -45,12 +47,15 @@ fn main() {
                 .unwrap_or_else(|_| std::path::PathBuf::from("./jr-local-data"));
 
             // Load or create config
-            let config = LocalConfig::load_or_create(data_dir);
+            let config = LocalConfig::load_or_create(data_dir.clone()); // clone: data_dir also needed for BlobStore
 
             // Determine static file directory (src/ relative to the app)
             let static_dir = std::env::current_dir()
                 .unwrap_or_default()
                 .join("src");
+
+            // Create blob store for document persistence
+            let blob_store = BlobStore::new(StorageConfig::new(data_dir));
 
             // Create shared state
             let local_state = LocalState {
@@ -58,6 +63,7 @@ fn main() {
                 config: Arc::new(RwLock::new(config)),
                 campaign_id: CampaignId::new(Uuid::new_v4()),
                 static_dir,
+                blob_store,
             };
 
             let app_handle = AppStateHandle {
@@ -97,7 +103,17 @@ fn main() {
             commands::export_data,
             commands::get_local_ip,
             commands::complete_setup,
+            commands::close_app,
         ])
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                // Prevent default close — show Keep/Shred dialog instead
+                api.prevent_close();
+
+                // Emit event to frontend to show the close dialog
+                let _ = window.emit("close-requested", ());
+            }
+        })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

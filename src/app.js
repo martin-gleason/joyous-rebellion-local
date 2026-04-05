@@ -8,10 +8,24 @@
 // In Tauri context, use invoke(). In browser dev, fall back to fetch().
 
 async function invoke(command, args) {
-    if (window.__TAURI__ && window.__TAURI__.core) {
-        return window.__TAURI__.core.invoke(command, args || {});
+    // Tauri 2: the IPC bridge is injected as window.__TAURI__
+    if (window.__TAURI__) {
+        try {
+            // Tauri 2.x uses window.__TAURI__.core.invoke
+            if (window.__TAURI__.core && window.__TAURI__.core.invoke) {
+                return await window.__TAURI__.core.invoke(command, args || {});
+            }
+            // Fallback: some Tauri 2 versions use window.__TAURI__.invoke directly
+            if (window.__TAURI__.invoke) {
+                return await window.__TAURI__.invoke(command, args || {});
+            }
+        } catch (e) {
+            console.error('Tauri invoke error for ' + command + ':', e);
+            throw e;
+        }
     }
     // Fallback: use fetch API for browser-only development
+    console.log('No Tauri IPC, using fetch fallback for:', command);
     return fetchFallback(command, args);
 }
 
@@ -51,7 +65,11 @@ let pollInterval = null;
 // ── Initialization ──────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded fired');
+    console.log('__TAURI__ available:', !!window.__TAURI__);
+    console.log('__TAURI__.core available:', !!(window.__TAURI__ && window.__TAURI__.core));
     initApp();
+    listenForCloseRequest();
 });
 
 async function initApp() {
@@ -286,7 +304,9 @@ function selectMode(el) {
 }
 
 async function finishSetup() {
+    console.log('finishSetup called');
     const name = document.getElementById('setup-name').value.trim();
+    console.log('Name:', name, 'Mode:', selectedMode);
     if (!name) {
         document.getElementById('setup-name').style.borderColor = 'var(--red)';
         document.getElementById('setup-name').focus();
@@ -298,7 +318,10 @@ async function finishSetup() {
     btn.textContent = 'Starting...';
 
     try {
-        await invoke('complete_setup', { campaignName: name, mode: selectedMode });
+        console.log('Invoking complete_setup...');
+        // Tauri 2: try snake_case params (matching Rust fn signature exactly)
+        const result = await invoke('complete_setup', { campaignName: name, mode: selectedMode });
+        console.log('complete_setup result:', result);
 
         document.getElementById('setup-overlay').classList.add('hidden');
         startPolling();
@@ -306,7 +329,7 @@ async function finishSetup() {
         detectIP();
     } catch (e) {
         console.error('Setup error:', e);
-        alert('Setup failed: ' + (e.message || e));
+        alert('Setup failed: ' + JSON.stringify(e));
         btn.disabled = false;
         btn.textContent = 'Start Server';
     }
@@ -323,6 +346,50 @@ async function detectIP() {
         }
     } catch (e) {
         console.error('IP detection error:', e);
+    }
+}
+
+// ── Close Dialog (Keep / Shred) ────────────────────────────
+
+function listenForCloseRequest() {
+    if (window.__TAURI__ && window.__TAURI__.event) {
+        window.__TAURI__.event.listen('close-requested', () => {
+            showCloseDialog();
+        });
+    }
+}
+
+function showCloseDialog() {
+    document.getElementById('close-dialog').classList.remove('hidden');
+}
+
+function hideCloseDialog() {
+    document.getElementById('close-dialog').classList.add('hidden');
+}
+
+async function handleKeepAndClose() {
+    hideCloseDialog();
+    try {
+        await invoke('close_app');
+    } catch (e) {
+        console.error('Close error:', e);
+        // Force close if command fails
+        if (window.__TAURI__ && window.__TAURI__.window) {
+            window.__TAURI__.window.getCurrent().destroy();
+        }
+    }
+}
+
+async function handleShredAndClose() {
+    hideCloseDialog();
+    try {
+        await invoke('shred_all_data');
+        await invoke('close_app');
+    } catch (e) {
+        console.error('Shred+close error:', e);
+        if (window.__TAURI__ && window.__TAURI__.window) {
+            window.__TAURI__.window.getCurrent().destroy();
+        }
     }
 }
 
