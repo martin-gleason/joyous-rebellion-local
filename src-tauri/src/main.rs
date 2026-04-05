@@ -68,11 +68,17 @@ fn main() {
             // Manage state for Tauri commands
             app.manage(app_handle);
 
-            // Auto-start the server on a background task
+            // Auto-start the server and store the handle so get_status reports correctly
+            let app_state: tauri::State<'_, AppStateHandle> = app.state();
+            let server_handle = app_state.server_handle.clone(); // clone: Arc
             let state_for_server = local_state;
             tauri::async_runtime::spawn(async move {
                 match crate::server::start_server(state_for_server).await {
-                    Ok(_handle) => info!("Embedded server started automatically"),
+                    Ok(handle) => {
+                        let mut guard = server_handle.write().await;
+                        *guard = Some(handle);
+                        info!("Embedded server started automatically");
+                    }
                     Err(e) => tracing::error!("Failed to auto-start server: {e}"),
                 }
             });
