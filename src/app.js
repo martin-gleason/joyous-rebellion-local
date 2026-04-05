@@ -230,7 +230,7 @@ async function saveSettings() {
     const mode = document.getElementById('settings-mode').value;
 
     try {
-        await invoke('complete_setup', { campaign_name: name, mode: mode });
+        await invoke('complete_setup', { campaignName: name, mode: mode });
         refreshDashboard();
     } catch (e) {
         console.error('Save settings error:', e);
@@ -298,7 +298,7 @@ async function finishSetup() {
     btn.textContent = 'Starting...';
 
     try {
-        await invoke('complete_setup', { campaign_name: name, mode: selectedMode });
+        await invoke('complete_setup', { campaignName: name, mode: selectedMode });
 
         document.getElementById('setup-overlay').classList.add('hidden');
         startPolling();
@@ -306,6 +306,7 @@ async function finishSetup() {
         detectIP();
     } catch (e) {
         console.error('Setup error:', e);
+        alert('Setup failed: ' + (e.message || e));
         btn.disabled = false;
         btn.textContent = 'Start Server';
     }
