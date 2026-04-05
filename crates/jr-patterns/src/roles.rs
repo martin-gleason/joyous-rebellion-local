@@ -103,6 +103,7 @@ pub fn ma_allowed_documents(role: &UserRole) -> HashSet<&'static str> {
         UserRole::Analyst
         | UserRole::FundraisingDirector
         | UserRole::Scout
+        | UserRole::ItScout
         | UserRole::Volunteer => HashSet::new(),
     }
 }
@@ -191,6 +192,35 @@ pub fn allowed_documents(role: &UserRole) -> HashSet<&'static str> {
             "turfBank",
             "turfDrop",
             "dropCode",
+            "listSlice",
+            "listContact",
+            "listResult",
+        ]
+        .into_iter()
+        .collect(),
+
+        // ItScout: same as Scout plus importedList.
+        // Elevated infrastructure access but NO campaign data (no strategic vision, no sensitive notes).
+        UserRole::ItScout => [
+            "contact",
+            "event",
+            "eventAttendee",
+            "interaction",
+            "commitment",
+            "turf",
+            "canvassingScript",
+            "doorKnockResult",
+            "address",
+            "addressCondition",
+            "shift",
+            "incident",
+            "issueRating",
+            "enlistCode",
+            "turfPacket",
+            "turfBank",
+            "turfDrop",
+            "dropCode",
+            "importedList",
             "listSlice",
             "listContact",
             "listResult",
@@ -367,6 +397,7 @@ mod tests {
             UserRole::Analyst,
             UserRole::FundraisingDirector,
             UserRole::Scout,
+            UserRole::ItScout,
             UserRole::Volunteer,
         ];
         for role in &roles {
@@ -452,7 +483,7 @@ mod tests {
 
     #[test]
     fn campaign_scout_volunteer_get_zero_ma_access() {
-        for role in &[UserRole::Scout, UserRole::Volunteer] {
+        for role in &[UserRole::Scout, UserRole::ItScout, UserRole::Volunteer] {
             let docs = ma_allowed_documents(role);
             assert!(docs.is_empty(), "{role:?} should have zero MA access");
         }

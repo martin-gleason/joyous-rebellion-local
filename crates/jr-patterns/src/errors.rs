@@ -108,6 +108,9 @@ pub enum UserRole {
     FundraisingDirector,
     /// Field scout
     Scout,
+    /// IT scout (elevated infrastructure access)
+    #[serde(alias = "itScout")]
+    ItScout,
     /// Volunteer
     Volunteer,
     /// Mutual Aid administrator
@@ -138,6 +141,7 @@ impl UserRole {
             UserRole::Operator | UserRole::MaAdmin => 80,
             UserRole::FundraisingDirector => 60,
             UserRole::Analyst => 40,
+            UserRole::ItScout => 25,
             UserRole::Scout | UserRole::MaDriver => 20,
             UserRole::Volunteer | UserRole::MaVolunteer => 10,
             UserRole::CommunityMember => 5,
@@ -191,6 +195,7 @@ mod tests {
             UserRole::Analyst,
             UserRole::FundraisingDirector,
             UserRole::Scout,
+            UserRole::ItScout,
             UserRole::Volunteer,
             UserRole::MaAdmin,
             UserRole::MaDriver,
