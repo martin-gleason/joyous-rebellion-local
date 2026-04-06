@@ -21,18 +21,18 @@
 <!-- Header -->
 <header>
     <h1>JR Local</h1>
-    <div class="status-row">
-        <div class="status-dot" id="server-dot"></div>
+    <div class="status-row" role="status" aria-label="Server status">
+        <div class="status-dot" id="server-dot" aria-hidden="true"></div>
         <span id="server-status-text">Starting...</span>
     </div>
 </header>
 
 <!-- Navigation -->
-<nav>
-    <button class="active" data-section="dashboard" onclick="showSection('dashboard')">Dashboard</button>
-    <button data-section="devices" onclick="showSection('devices')">Devices</button>
-    <button data-section="settings" onclick="showSection('settings')">Settings</button>
-    <button data-section="data" onclick="showSection('data')">Data</button>
+<nav aria-label="Main navigation">
+    <button class="active" data-section="dashboard" onclick="showSection('dashboard')" aria-label="Dashboard">Dashboard</button>
+    <button data-section="devices" onclick="showSection('devices')" aria-label="Devices">Devices</button>
+    <button data-section="settings" onclick="showSection('settings')" aria-label="Settings">Settings</button>
+    <button data-section="data" onclick="showSection('data')" aria-label="Data management">Data</button>
 </nav>
 
 <!-- Main Content -->
@@ -42,7 +42,7 @@
     <div class="section active" id="section-dashboard">
         <div class="stats-grid">
             <div class="card">
-                <div class="stat-value" id="peer-count">0</div>
+                <div class="stat-value" id="peer-count" role="status" aria-label="Connected devices count">0</div>
                 <div class="stat-label">Connected Devices</div>
             </div>
             <div class="card">
@@ -59,18 +59,18 @@
             <div class="card">
                 <h2>Pair a Device</h2>
                 <div class="qr-container">
-                    <img id="qr-image" alt="QR Code" style="display:none;">
+                    <img id="qr-image" alt="QR code for device connection" style="display:none;">
                     <p id="qr-loading" style="color: var(--muted); font-size: 14px;">Generating QR code...</p>
                 </div>
-                <button class="btn btn-secondary" onclick="refreshQR()" style="width: 100%;">Refresh QR Code</button>
+                <button class="btn btn-secondary" onclick="refreshQR()" style="width: 100%;" aria-label="Refresh QR code for device pairing">Refresh QR Code</button>
             </div>
             <div class="card">
                 <h2>Session Code</h2>
-                <div class="session-code" id="session-code-display">------</div>
+                <div class="session-code" id="session-code-display" aria-live="polite" aria-label="Session code">------</div>
                 <p style="color: var(--muted); font-size: 12px; text-align: center; margin-bottom: 12px;">
                     Enter this code on your device to connect
                 </p>
-                <button class="btn btn-secondary" onclick="handleRegenerateCode()" style="width: 100%;">Regenerate Code</button>
+                <button class="btn btn-secondary" onclick="handleRegenerateCode()" style="width: 100%;" aria-label="Regenerate session code">Regenerate Code</button>
             </div>
         </div>
     </div>
@@ -103,22 +103,22 @@
                     <option value="mutual_aid">Mutual Aid</option>
                 </select>
             </div>
-            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <button class="btn btn-primary" onclick="saveSettings()" aria-label="Save campaign settings">Save Settings</button>
         </div>
 
         <div class="card">
             <h2>Session Code</h2>
-            <div class="session-code" id="settings-session-code">------</div>
+            <div class="session-code" id="settings-session-code" aria-live="polite" aria-label="Session code">------</div>
             <p style="color: var(--muted); font-size: 12px; margin-bottom: 12px;">
                 Regenerating disconnects all currently paired devices.
             </p>
-            <button class="btn btn-secondary" onclick="handleRegenerateCode()">Regenerate Session Code</button>
+            <button class="btn btn-secondary" onclick="handleRegenerateCode()" aria-label="Regenerate session code, disconnects all devices">Regenerate Session Code</button>
         </div>
 
         <div class="card">
             <h2>Server</h2>
-            <div class="status-row">
-                <div class="status-dot" id="settings-server-dot"></div>
+            <div class="status-row" role="status" aria-label="Server status">
+                <div class="status-dot" id="settings-server-dot" aria-hidden="true"></div>
                 <span id="settings-server-text">Checking...</span>
             </div>
             <p style="color: var(--muted); font-size: 12px; margin-top: 8px;" id="settings-ip-display">
@@ -134,7 +134,7 @@
             <p style="color: var(--muted); font-size: 14px; margin-bottom: 12px;">
                 Download a JSON export of all campaign data on this device.
             </p>
-            <button class="btn btn-primary" onclick="handleExport()">Export Data</button>
+            <button class="btn btn-primary" onclick="handleExport()" aria-label="Export campaign data as JSON">Export Data</button>
         </div>
 
         <div class="card" style="border-color: var(--red);">
@@ -143,7 +143,7 @@
                 Securely delete all campaign data on this device. Files are overwritten with random bytes before deletion.
                 This action cannot be undone.
             </p>
-            <button class="btn btn-danger" onclick="handleShred()">Shred All Data</button>
+            <button class="btn btn-danger" onclick="handleShred()" aria-label="Securely delete all campaign data">Shred All Data</button>
         </div>
     </div>
 

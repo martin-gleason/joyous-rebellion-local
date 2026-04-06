@@ -292,6 +292,21 @@ main {
     border-color: var(--sky-blue);
 }
 
+/* ── Focus Visibility (Keyboard Accessibility) ──────────── */
+
+:focus-visible {
+    outline: 2px solid #B3DDF2;
+    outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible {
+    outline: 2px solid #B3DDF2;
+    outline-offset: 2px;
+}
+
 /* ── Device List ─────────────────────────────────────────── */
 
 .device-list {
